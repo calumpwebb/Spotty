@@ -4,6 +4,12 @@ Spotty is a Spotify Playlist Creator that can create a new (or update) playlist 
 
 Created by Calum Webb 2025
 
+## Setup
+
+You'll need to setup pyenv. This repo currently uses Python 3.13.0. 
+
+Once you have a virtualenv setup and you have installed all the requirements, you can start.
+
 ## How to use
 
 You'll need to sign up for the Spotify Developer API program and fetch your `client_id` and `client_secret` for the steps below.
