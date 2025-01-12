@@ -25,7 +25,7 @@ def create_app(client_id, client_secret, redirect_uri="http://localhost:8888/cal
         "user-read-private "
         "user-read-email "
         "playlist-modify-public "
-        "playlist-modify-private"
+        "playlist-modify-private "
     )
     STATE_KEY = "spotify_auth_state"
 
