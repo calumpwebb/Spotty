@@ -1,0 +1,81 @@
+# macOS-specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# macOS Finder attributes
+Icon?
+._*
+
+# macOS system files
+.Spotlight-V100
+.Trashes
+.DS_Store?
+
+# macOS temporary files
+.TemporaryItems
+.fseventsd
+.VolumeIcon.icns
+
+# Python bytecode files
+*.py[cod]
+__pycache__/
+
+# Virtual environment directories
+env/
+venv/
+ENV/
+VENV/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Logs and other system files
+*.log
+*.bak
+*.swp
+*.tmp
+
+# Python egg files
+*.egg
+*.egg-info/
+dist/
+build/
+*.spec
+
+# Coverage and testing
+htmlcov/
+.tox/
+.nox/
+.coverage
+*.cover
+*.py,cover
+.cache
+nosetests.xml
+coverage.xml
+*.mocha
+*.pytest_cache/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.iml
+
+# Pipfile and other dependencies
+Pipfile.lock
+
+# Flask and Django
+instance/
+.migrations/
+
+# Temporary and backup files
+*.swp
+*.swo
+*~
+*.tmp
+*.temp
+*.old
+*.orig
+
+# Compiled C extensions
+*.so
