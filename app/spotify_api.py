@@ -11,6 +11,7 @@ DEFAULT_MARKET = "US"
 LIMIT_PER_REQUEST = 20
 MAX_TRACKS_PER_ADD = 100
 
+
 def spotify_request(method="GET", url="", access_token="", params=None, json_data=None):
     """
     Makes a request to the Spotify API with the given method, URL,
