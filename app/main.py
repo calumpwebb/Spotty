@@ -2,11 +2,9 @@ import logging
 import sys
 
 from app.cli import parse_arguments
-from app.spotify_api import search_song_by_name, create_playlist, add_tracks_to_playlist
-from app.caching import (
-    song_search_cache,
-)
-from app.permutations import generate_word_permutations
+from app.spotify_api import create_playlist, add_tracks_to_playlist
+from app.caching import song_search_cache
+from app.permutations import generate_all_sentence_permutations
 from app.prompts import yes_no_select, scrollable_playlist_view
 from InquirerPy import inquirer
 
@@ -56,114 +54,120 @@ def main():
         f"Search string: '{search_string}', Playlist name: '{playlist_name}', Playlist id: '{playlist_id}"
     )
 
-    # Generate permutations
-    word_permutations = generate_word_permutations(search_string, max_words=max_words)
-    logger.info(f"Found {len(word_permutations):,} permutations in total.")
+    sentences = generate_all_sentence_permutations(search_string, max_word_count_per_sentence=max_words)
 
-    # Search for tracks for each permutation
-    potential_playlists = []
+    all_potential_playlists = []
 
-    logger.info(
-        "Beginning track searches for each permutation. This may take a while..."
-    )
+    for i, word_permutations in enumerate(sentences):
+        logger.info(f"Found {len(word_permutations):,} permutations in total for sentence {i}.")
 
-    total_permutations = len(word_permutations)
+        # Search for tracks for each permutation
+        potential_playlists = []
 
-    for i, grouping in enumerate(word_permutations, start=1):
-        pct_done = (i / total_permutations) * 100
-        progress_color = RED
-        if len(potential_playlists) > 0:
-            progress_color = GREEN
-
-        sys.stdout.write(
-            f"\r{progress_color}Progress:{RESET} {i:,}/{total_permutations:,} "
-            f"({pct_done:.2f}%) | Potential playlists found: {len(potential_playlists)} [{len(song_search_cache)} API searches]"
-        )
-        sys.stdout.flush()
-
-        all_tracks = fetch_tracks_for_grouping(
-            grouping, access_token, max_results=max_search_results
-        )
-        if not all_tracks:
-            continue
-
-        track_list = []
-        for tracks_for_term in all_tracks:
-            first_track = tracks_for_term[0]
-            track_list.append(
-                {
-                    "id": first_track["id"],
-                    "name": first_track["name"],
-                    "popularity": first_track["popularity"],
-                    "artist": (
-                        first_track["artists"][0]["name"]
-                        if first_track.get("artists")
-                        else "Unknown"
-                    ),
-                    "uri": first_track["uri"],
-                }
-            )
-        potential_playlists.append(track_list)
-
-    print()
-
-    if not potential_playlists:
-        logger.warning("Unable to make a playlist as no valid sets of tracks matched.")
-        sys.exit(0)
-
-    logger.info(f"Found {len(potential_playlists)} potential playlists total.")
-
-    # Prepare user choices
-    choices = []
-    for idx, playlist in enumerate(potential_playlists, start=1):
-        total_score = sum(t["popularity"] for t in playlist)
-        choice_name = (
-            f"Playlist #{idx} | Score={total_score} | {len(playlist)} track(s)"
-        )
-        choices.append({"name": choice_name, "value": idx - 1})
-
-    # Loop until the user creates a playlist or exits
-    while True:
-        chosen_idx = inquirer.select(
-            message="Select the playlist you want to examine/create:",
-            choices=choices,
-            instruction="↑/↓ to navigate, Enter to select",
-        ).execute()
-
-        selected_playlist = potential_playlists[chosen_idx]
-        total_score = sum(t["popularity"] for t in selected_playlist)
         logger.info(
-            f"You selected playlist #{chosen_idx+1} with total popularity score of {total_score}."
+            "Beginning track searches for each permutation. This may take a while..."
         )
 
-        scrollable_playlist_view(selected_playlist)
+        total_permutations = len(word_permutations)
 
-        action_verb = "create"
+        for i, grouping in enumerate(word_permutations, start=1):
+            pct_done = (i / total_permutations) * 100
+            progress_color = RED
+            if len(potential_playlists) > 0:
+                progress_color = GREEN
 
-        if playlist_id is not None:
-            action_verb = "add"
-
-        if yes_no_select(f"Do you want to {action_verb} this playlist?"):
-            created_playlist = None
-
-            if playlist_id is None:
-                created_playlist = create_playlist(access_token, playlist_name)
-
-                if created_playlist:
-                    logger.info(
-                        f"{GREEN}✅ Successfully created playlist:{RESET} {created_playlist.get('name')}"
-                    )
-                    playlist_id = created_playlist["id"]
-                else:
-                    logger.error("Playlist creation failed.")
-                    break
-
-            add_tracks_to_playlist(access_token, playlist_id, selected_playlist)
-            return
-        else:
-            logger.info(
-                "User chose not to create this playlist. Going back to selection."
+            sys.stdout.write(
+                f"\r{progress_color}Progress:{RESET} {i:,}/{total_permutations:,} "
+                f"({pct_done:.2f}%) | Potential playlists found: {len(potential_playlists)} [{len(song_search_cache)} API searches]"
             )
+            sys.stdout.flush()
+
+            all_tracks = fetch_tracks_for_grouping(
+                grouping, access_token, max_results=max_search_results
+            )
+            if not all_tracks:
+                continue
+
+            track_list = []
+            for tracks_for_term in all_tracks:
+                first_track = tracks_for_term[0]
+                track_list.append(
+                    {
+                        "id": first_track["id"],
+                        "name": first_track["name"],
+                        "popularity": first_track["popularity"],
+                        "artist": (
+                            first_track["artists"][0]["name"]
+                            if first_track.get("artists")
+                            else "Unknown"
+                        ),
+                        "uri": first_track["uri"],
+                    }
+                )
+            potential_playlists.append(track_list)
+
+        print()
+
+        if potential_playlists:
+            all_potential_playlists.append(potential_playlists)
+        else:
+            logger.warning("Unable to make a playlist as no valid sets of tracks matched.")
+            sys.exit(0)
+
+    for potential_playlists in all_potential_playlists:
+        logger.info(f"Found {len(potential_playlists)} potential playlists total.")
+
+        # Prepare user choices
+        choices = []
+        for idx, playlist in enumerate(potential_playlists, start=1):
+            total_score = sum(t["popularity"] for t in playlist)
+            choice_name = (
+                f"Playlist #{idx} | Score={total_score} | {len(playlist)} track(s)"
+            )
+            choices.append({"name": choice_name, "value": idx - 1})
+
+        # Loop until the user creates a playlist or exits
+        selecting = True
+        while selecting:
+            chosen_idx = inquirer.select(
+                message="Select the playlist you want to examine/create:",
+                choices=choices,
+                instruction="↑/↓ to navigate, Enter to select",
+            ).execute()
+
+            selected_playlist = potential_playlists[chosen_idx]
+            total_score = sum(t["popularity"] for t in selected_playlist)
+            logger.info(
+                f"You selected playlist #{chosen_idx+1} with total popularity score of {total_score}."
+            )
+
+            scrollable_playlist_view(selected_playlist)
+
+            action_verb = "create"
+
+            if playlist_id is not None:
+                action_verb = "add"
+
+            if yes_no_select(f"Do you want to {action_verb} this playlist?"):
+
+                if playlist_id is None:
+                    created_playlist = create_playlist(access_token, playlist_name)
+
+                    if created_playlist:
+                        logger.info(
+                            f"{GREEN}✅ Successfully created playlist:{RESET} {created_playlist.get('name')}"
+                        )
+                        playlist_id = created_playlist["id"]
+                    else:
+                        logger.error("Playlist creation failed.")
+                        break
+
+                add_tracks_to_playlist(access_token, playlist_id, selected_playlist)
+                selecting = False
+            else:
+                logger.info(
+                    "User chose not to create this playlist. Going back to selection."
+                )
 
 
 if __name__ == "__main__":
