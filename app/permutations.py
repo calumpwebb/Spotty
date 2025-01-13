@@ -16,13 +16,13 @@ def generate_all_sentence_permutations(text, max_word_count_per_sentence):
 
     for sentence in sentences:
         print(f'Checking sentence "{sentence}"')
-        sentence_result = generate_sentence_permutations(
+        sentence_result = generate_sentence_permutations_v2(
             sentence, max_word_count_per_sentence
         )
 
         results.append(sentence_result)
 
-    return results
+    return sentences, results
 
 
 def count_sentence_permutations(word_count, max_word_count):
@@ -69,6 +69,10 @@ def generate_sentence_permutations_v2(sentence, max_word_count):
     words = sentence.split()
     total_number_of_words = len(words)
     memo = {}
+
+    print(
+        f"Will generate {count_sentence_permutations(len(words), max_word_count):,} permutations"
+    )
 
     def backtrack(start):
         # Return memoized result if available

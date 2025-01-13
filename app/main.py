@@ -54,12 +54,16 @@ def main():
         f"Search string: '{search_string}', Playlist name: '{playlist_name}', Playlist id: '{playlist_id}"
     )
 
-    sentences = generate_all_sentence_permutations(search_string, max_word_count_per_sentence=max_words)
+    sentences, sentence_permutations = generate_all_sentence_permutations(
+        search_string, max_word_count_per_sentence=max_words
+    )
 
     all_potential_playlists = []
 
-    for i, word_permutations in enumerate(sentences):
-        logger.info(f"Found {len(word_permutations):,} permutations in total for sentence {i}.")
+    for i, word_permutations in enumerate(sentence_permutations):
+        logger.info(
+            f"Found {len(word_permutations):,} permutations in total for sentence {i}."
+        )
 
         # Search for tracks for each permutation
         potential_playlists = []
@@ -70,7 +74,7 @@ def main():
 
         total_permutations = len(word_permutations)
 
-        for i, grouping in enumerate(word_permutations, start=1):
+        for j, grouping in enumerate(word_permutations, start=1):
             pct_done = (i / total_permutations) * 100
             progress_color = RED
             if len(potential_playlists) > 0:
@@ -108,10 +112,13 @@ def main():
 
         print()
 
+        print(potential_playlists)
         if potential_playlists:
             all_potential_playlists.append(potential_playlists)
         else:
-            logger.warning("Unable to make a playlist as no valid sets of tracks matched.")
+            logger.warning(
+                f"Unable to make a playlist as no valid sets of tracks matched. Unable to match \n\t'{sentences[i]}'"
+            )
             sys.exit(0)
 
     for potential_playlists in all_potential_playlists:
